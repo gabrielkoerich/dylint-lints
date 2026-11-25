@@ -1,0 +1,28 @@
+warning: `RunQueue::items` is worked on outside `RunQueue`: 2 places in 1 module
+  --> $DIR/main.rs:25:13
+   |
+LL |             queue.items.push(task);
+   |             ^^^^^^^^^^^
+   |
+note: also here
+  --> $DIR/main.rs:30:20
+   |
+LL |         let task = queue.items.get(queue.head).copied();
+   |                    ^^^^^^^^^^^
+   = note: also known outside: `head`
+   = note: kept: `limit`
+   = help: give `RunQueue` a method that does this work
+   = note: `#[warn(field_leak)]` on by default
+
+warning: `RunQueue::head` is worked on outside `RunQueue`: 1 place in 1 module
+  --> $DIR/main.rs:31:9
+   |
+LL |         queue.head += 1;
+   |         ^^^^^^^^^^
+   |
+   = note: also known outside: `items`
+   = note: kept: `limit`
+   = help: give `RunQueue` a method that does this work
+
+warning: 2 warnings emitted
+

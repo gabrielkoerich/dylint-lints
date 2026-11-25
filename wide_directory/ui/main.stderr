@@ -1,0 +1,11 @@
+warning: directory `$DIR/auxiliary/wide` has 4 members, more than 3
+  --> $DIR/main.rs:1:1
+   |
+LL | #[path = "auxiliary/wide/a.rs"]
+   | ^
+   |
+   = help: group its files into directories by what they are about
+   = note: `#[warn(wide_directory)]` on by default
+
+warning: 1 warning emitted
+

@@ -5,6 +5,11 @@ Custom Rust lints for [dylint](https://github.com/trailofbits/dylint), for rules
 | Lint | What it flags |
 |------|---------------|
 | [`use_in_fn`](use_in_fn/src/lib.rs) | A `use` item inside a function, method or closure body |
+| [`long_file`](long_file/src/lib.rs) | A source file with more than `max_lines` lines, 2000 by default |
+| [`wide_directory`](wide_directory/src/lib.rs) | A source directory with more than `max_members` files and directories, 15 by default |
+| [`module_cycle`](module_cycle/src/lib.rs) | Sibling modules that use each other in a circle |
+| [`tangle`](tangle/src/lib.rs) | Types and functions that use each other in a circle across modules, or more than seven of them |
+| [`field_leak`](field_leak/src/lib.rs) | Code outside a struct that works on its fields, when the struct keeps some fields to itself |
 
 `use_in_fn` covers the case Clippy leaves open. With `clippy::absolute_paths` (no `crate::a::b` or `std::a::b` in code), `clippy::arbitrary_source_item_ordering` (`mod`, then `use`, then everything else) and `clippy::items_after_statements` (no `use` after a statement), it keeps every import at the top of its module.
 
