@@ -1,0 +1,62 @@
+warning: modules `kinds`, `socket` in the crate root use each other in a circle
+  --> $DIR/main.rs:3:30
+   |
+LL |     pub const LIMIT: usize = super::socket::BACKLOG;
+   |                              ^^^^^^^^^^^^^^^^^^^^^^
+   |
+note: `kinds` uses `socket` by `socket::BACKLOG`
+  --> $DIR/main.rs:3:30
+   |
+LL |     pub const LIMIT: usize = super::socket::BACKLOG;
+   |                              ^^^^^^^^^^^^^^^^^^^^^^
+note: `socket` uses `kinds` by `kinds::Ready`
+  --> $DIR/main.rs:10:24
+   |
+LL |     pub fn listen() -> super::kinds::Ready {
+   |                        ^^^^^^^^^^^^^^^^^^^
+   = help: move what they share into one of them, or into a module both can use
+   = note: `#[warn(module_cycle)]` on by default
+
+warning: modules `queue`, `stats` in `store` use each other in a circle
+  --> $DIR/main.rs:41:17
+   |
+LL |                 super::stats::count()
+   |                 ^^^^^^^^^^^^^^^^^^^
+   |
+note: `queue` uses `stats` by `store::stats::count`
+  --> $DIR/main.rs:41:17
+   |
+LL |                 super::stats::count()
+   |                 ^^^^^^^^^^^^^^^^^^^
+note: `stats` uses `queue` by `store::queue::Queue`, `store::queue::Queue::size`
+  --> $DIR/main.rs:49:13
+   |
+LL |             queue.len + queue.size()
+   |             ^^^^^^^^^
+   = help: move what they share into one of them, or into a module both can use
+
+warning: modules `a`, `b`, `c` in `ring` use each other in a circle
+  --> $DIR/main.rs:58:13
+   |
+LL |             super::b::g();
+   |             ^^^^^^^^^^^
+   |
+note: `a` uses `b` by `ring::b::g`
+  --> $DIR/main.rs:58:13
+   |
+LL |             super::b::g();
+   |             ^^^^^^^^^^^
+note: `b` uses `c` by `ring::c::h`
+  --> $DIR/main.rs:64:13
+   |
+LL |             super::c::h();
+   |             ^^^^^^^^^^^
+note: `c` uses `a` by `ring::a::f`
+  --> $DIR/main.rs:70:13
+   |
+LL |             super::a::f();
+   |             ^^^^^^^^^^^
+   = help: move what they share into one of them, or into a module both can use
+
+warning: 3 warnings emitted
+

@@ -1,0 +1,19 @@
+warning: file has 22 lines, more than 10
+  --> $DIR/main.rs:1:1
+   |
+LL | #[path = "auxiliary/long.rs"]
+   | ^
+   |
+   = help: split it into modules by what each part is about
+   = note: `#[warn(long_file)]` on by default
+
+warning: file has 11 lines, more than 10
+  --> $DIR/auxiliary/long.rs:1:1
+   |
+LL | pub fn sum() -> u8 {
+   | ^
+   |
+   = help: split it into modules by what each part is about
+
+warning: 2 warnings emitted
+

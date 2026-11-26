@@ -1,0 +1,85 @@
+warning: `kernel::Tasks`, `kernel::timers::Timers` use each other in a circle
+  --> $DIR/main.rs:8:38
+   |
+LL |         pub fn sleep(&self, timers: &timers::Timers) {
+   |                                      ^^^^^^^^^^^^^^
+   |
+   = note: written in `kernel`, `kernel::timers`
+note: `kernel::Tasks` uses `kernel::timers::Timers` by `kernel::timers::Timers`, `kernel::timers::Timers::fire`
+  --> $DIR/main.rs:8:38
+   |
+LL |         pub fn sleep(&self, timers: &timers::Timers) {
+   |                                      ^^^^^^^^^^^^^^
+note: `kernel::timers::Timers` uses `kernel::Tasks` by `kernel::Tasks`, `kernel::Tasks::wake`
+  --> $DIR/main.rs:17:40
+   |
+LL |             pub fn fire(&self, tasks: &super::Tasks) {
+   |                                        ^^^^^^^^^^^^
+   = help: give the circle one owner that calls the others, so no member knows its caller
+   = note: `#[warn(tangle)]` on by default
+
+warning: `shapes::Circle`, `shapes::Square` use each other in a circle
+  --> $DIR/main.rs:42:13
+   |
+LL |             Circle.radius()
+   |             ^^^^^^^^^^^^^^^
+   |
+   = note: written in `impls`, `shapes`
+note: `shapes::Square` uses `shapes::Circle` by `shapes::Circle::radius`, `shapes::Circle`
+  --> $DIR/main.rs:42:13
+   |
+LL |             Circle.radius()
+   |             ^^^^^^^^^^^^^^^
+note: `shapes::Circle` uses `shapes::Square` by `shapes::Square`, `shapes::Square::area`
+  --> $DIR/main.rs:53:36
+   |
+LL |         pub fn fit(&self, square: &super::shapes::Square) -> u8 {
+   |                                    ^^^^^^^^^^^^^^^^^^^^^
+   = help: give the circle one owner that calls the others, so no member knows its caller
+
+warning: 8 things use each other in a circle
+  --> $DIR/main.rs:60:52
+   |
+LL |     pub fn a(n: u8) -> u8 { if n == 0 { 0 } else { b(n - 1) } }
+   |                                                    ^
+   |
+note: `eight::a` uses `eight::b` by `eight::b`
+  --> $DIR/main.rs:60:52
+   |
+LL |     pub fn a(n: u8) -> u8 { if n == 0 { 0 } else { b(n - 1) } }
+   |                                                    ^
+note: `eight::b` uses `eight::c` by `eight::c`
+  --> $DIR/main.rs:61:25
+   |
+LL |     fn b(n: u8) -> u8 { c(n) }
+   |                         ^
+note: `eight::c` uses `eight::d` by `eight::d`
+  --> $DIR/main.rs:62:25
+   |
+LL |     fn c(n: u8) -> u8 { d(n) }
+   |                         ^
+note: `eight::d` uses `eight::e` by `eight::e`
+  --> $DIR/main.rs:63:25
+   |
+LL |     fn d(n: u8) -> u8 { e(n) }
+   |                         ^
+note: `eight::e` uses `eight::f` by `eight::f`
+  --> $DIR/main.rs:64:25
+   |
+LL |     fn e(n: u8) -> u8 { f(n) }
+   |                         ^
+note: `eight::f` uses `eight::g` by `eight::g`
+  --> $DIR/main.rs:65:25
+   |
+LL |     fn f(n: u8) -> u8 { g(n) }
+   |                         ^
+note: `eight::g` uses `eight::h` by `eight::h`
+  --> $DIR/main.rs:66:25
+   |
+LL |     fn g(n: u8) -> u8 { h(n) }
+   |                         ^
+   = note: and 1 more tie
+   = help: give the circle one owner that calls the others, so no member knows its caller
+
+warning: 3 warnings emitted
+

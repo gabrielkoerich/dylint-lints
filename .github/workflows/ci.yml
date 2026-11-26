@@ -1,0 +1,124 @@
+name: ci
+
+on:
+  push:
+    branches: ['**']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  DYLINT_VERSION: 6.3.2
+
+jobs:
+  crates:
+    name: find lint crates
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      list: ${{ steps.list.outputs.list }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      # Every top-level folder with a Cargo.toml is a lint, so a new one gets CI without editing this file
+      - id: list
+        run: |
+          for manifest in ./*/Cargo.toml; do
+            basename "$(dirname "$manifest")"
+          done | jq -Rnc '[inputs]' | sed 's/^/list=/' >> "$GITHUB_OUTPUT"
+
+  lint:
+    name: ${{ matrix.crate }}
+    needs: crates
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        crate: ${{ fromJSON(needs.crates.outputs.list) }}
+    defaults:
+      run:
+        working-directory: ${{ matrix.crate }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Install the crate's nightly
+        run: |
+          rustup toolchain install
+          rustup component add rustfmt clippy
+
+      - uses: taiki-e/install-action@073e1fd0bc889c9aee68dbaaa927cde1b5653a83 # v2.90.11
+        with:
+          tool: cargo-dylint@${{ env.DYLINT_VERSION }},dylint-link@${{ env.DYLINT_VERSION }}
+
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          workspaces: ${{ matrix.crate }}
+          cache-directories: ~/.dylint_drivers
+
+      - name: Format
+        run: cargo fmt --check
+
+      - name: Clippy
+        run: cargo clippy --all-targets --locked -- -D warnings
+
+      # Builds the lint and runs it on ui/, comparing its warnings with the .stderr files
+      - name: UI test
+        run: cargo test --locked
+
+  all-lints:
+    name: every lint on every crate
+    needs: [crates, lint]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Every crate pins the same nightly, so one install serves them all
+      - name: Install the nightly
+        working-directory: use_in_fn
+        run: rustup toolchain install
+
+      - uses: taiki-e/install-action@073e1fd0bc889c9aee68dbaaa927cde1b5653a83 # v2.90.11
+        with:
+          tool: cargo-dylint@${{ env.DYLINT_VERSION }},dylint-link@${{ env.DYLINT_VERSION }}
+
+      # rust-cache takes one workspace per line
+      - name: List workspaces
+        run: |
+          {
+            echo 'WORKSPACES<<EOF'
+            for manifest in ./*/Cargo.toml; do
+              basename "$(dirname "$manifest")"
+            done
+            echo 'EOF'
+          } >> "$GITHUB_ENV"
+
+      - uses: Swatinem/rust-cache@d1527c8f67ef9af357290475d4af4b0fab8f12e0 # v2.9.3
+        with:
+          workspaces: ${{ env.WORKSPACES }}
+          cache-directories: ~/.dylint_drivers
+
+      # Loads each lint the way a project does, with cargo dylint, and checks every crate here with it
+      - name: Run every lint
+        env:
+          CRATES: ${{ join(fromJSON(needs.crates.outputs.list), ' ') }}
+          DYLINT_RUSTFLAGS: -D warnings
+        run: |
+          for lint in $CRATES; do
+            for crate in $CRATES; do
+              echo "::group::$lint on $crate"
+              (cd "$crate" && cargo dylint --path "../$lint" -- --all-targets)
+              echo "::endgroup::"
+            done
+          done
